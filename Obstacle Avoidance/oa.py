@@ -50,7 +50,7 @@ leftMotor.setPosition(3.5)
 rightMotor.setPosition(2)
 
 # Set ideal motor velocity.
-initialVelocity = 0.7 * maxMotorVelocity
+initialVelocity = 1 * maxMotorVelocity
 
 # Set the initial velocity of the left and right wheel motors.
 leftMotor.setVelocity(initialVelocity)
@@ -59,7 +59,7 @@ rightMotor.setVelocity(initialVelocity)
 start_flag = 0
 counter = 0;
 mult = 0
-
+vector_mul = 1
 while robot.step(timeStep) != -1:
     # Read values from four distance sensors and calibrate.
     outerLeftSensorValue = outerLeftSensor.getValue() / distanceSensorCalibrationConstant
@@ -67,16 +67,6 @@ while robot.step(timeStep) != -1:
     centralSensorValue = centralSensor.getValue() / distanceSensorCalibrationConstant
     centralRightSensorValue = centralRightSensor.getValue() / distanceSensorCalibrationConstant
     outerRightSensorValue = outerRightSensor.getValue() / distanceSensorCalibrationConstant
-    
-    if(counter == 50):
-        leftMotor.setPosition(float('inf'))
-        rightMotor.setPosition(float('inf'))
-        counter = 51
-    else:
-        counter = counter + 1
-        
-    
-    
     if(start_flag == 0):
         outerLeftSensorValue_old = outerLeftSensorValue
         centralLeftSensorValue_old = centralLeftSensorValue
@@ -84,18 +74,36 @@ while robot.step(timeStep) != -1:
         centralRightSensorValue_old = centralRightSensorValue
         outerRightSensorValue_old = outerRightSensorValue
         start_flag=1
-   
-
+    
+    if(counter == 43):
+        leftMotor.setPosition(float('inf'))
+        rightMotor.setPosition(float('inf'))
+        leftMotor.setVelocity(initialVelocity)
+        rightMotor.setVelocity(initialVelocity) 
+        counter = 51
+    else:
+        counter = counter + 1
+    
+    if(mult != 0.1):    
+        if(counter > 780):#after a certain time
+            compass.enable(timeStep)
+            mult = 4       #Activate compass
+        if(counter >1300):
+            mult = 10
+        
+        
     if((outerLeftSensorValue_old==outerLeftSensorValue)and(centralLeftSensorValue_old==centralLeftSensorValue)and(centralSensorValue_old==centralSensorValue)and(centralRightSensorValue_old==centralRightSensorValue)and(outerRightSensorValue_old==outerRightSensorValue)):
-        if(mult == 5):
+        if((mult == 4)or(mult == 0.1)or(mult == 10)): #IF compass activated from object or time
+            initialVelocity = 1 * maxMotorVelocity
             values = compass.getValues()
+            if((values[0] > 1)or(values[0]<-1)):
+                mult=1
             # Set wheel velocities based on sensor values, prefer right turns if the central sensor is triggered.
             leftMotor.setVelocity(initialVelocity + values[0]*mult - (centralRightSensorValue + outerRightSensorValue) / 2)
-            rightMotor.setVelocity(initialVelocity  - (centralLeftSensorValue + outerLeftSensorValue) / 2 - centralSensorValue)
-
+            rightMotor.setVelocity(initialVelocity - values[0]*mult - (centralLeftSensorValue + outerLeftSensorValue) / 2 - centralSensorValue)
     else:
-        
-        mult = 5
+        initialVelocity = 0.8 * maxMotorVelocity #slow down to avoid crash
+        vector_mul = 0.6
         outerLeftSensorValue_old = outerLeftSensorValue
         centralLeftSensorValue_old = centralLeftSensorValue
         centralSensorValue_old = centralSensorValue
