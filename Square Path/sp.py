@@ -23,17 +23,20 @@ for i in range(0, 4):
         rightWheel.setPosition(1000)
         # Wait for the robot to reach a corner.
         #robot.step(3905)
-        res = round(rightWheelSensor.getValue(),1)
-        while( res != 20.6):
+        #leftWheel.setVelocity(5.23)
+        #res = round(rightWheelSensor.getValue(),1)
+        res=0
+        while( res <= 20.42):
             robot.step(1)
-            res = round(rightWheelSensor.getValue(),1)
+            res = round(rightWheelSensor.getValue(),3)
+            
         # Then, set the right wheel backward, so the robot will turn right.
         leftWheel.setPosition(1000)
         rightWheel.setPosition(-1000)
         #rightWheel.setVelocity(5.22)
         # Wait until the robot has turned 90 degrees clockwise.
         #robot.step(464)
-        while(res>= 18.2):
+        while(res>= 18.08):
             robot.step(1)
             res = round(rightWheelSensor.getValue(),3)
         #print(res)
@@ -42,11 +45,11 @@ for i in range(0, 4):
         # First set both wheels to go forward, so the robot goes straight.
         leftWheel.setPosition(1000)
         rightWheel.setPosition(1000)
-        rightWheel.setVelocity(5.18)
-        res = round(rightWheelSensor.getValue(),1)
-        while( res != 38.8):
+        rightWheel.setVelocity(5.19)
+        res = round(rightWheelSensor.getValue(),3)
+        while( res <= 38.75):
             robot.step(1)
-            res = round(rightWheelSensor.getValue(),1)
+            res = round(rightWheelSensor.getValue(),3)
         print(res)
         # Then, set the right wheel backward, so the robot will turn right.
         leftWheel.setPosition(1000)
@@ -62,7 +65,7 @@ for i in range(0, 4):
         rightWheel.setPosition(1000)
         leftWheel.setVelocity(5.19)
         res = round(rightWheelSensor.getValue(),1)
-        while( res != 57.5):
+        while( res != 57.2):
             robot.step(1)
             res = round(rightWheelSensor.getValue(),1)
         #print(res)
@@ -70,7 +73,7 @@ for i in range(0, 4):
         leftWheel.setPosition(1000)
         rightWheel.setPosition(-1000)
         
-        while(res >= 55.21):
+        while(res >= 54.81):
             robot.step(1)
             res = round(rightWheelSensor.getValue(),3)
     
@@ -79,7 +82,7 @@ for i in range(0, 4):
         # First set both wheels to go forward, so the robot goes straight.
         leftWheel.setPosition(1000)
         rightWheel.setPosition(1000)
-        #rightWheel.setVelocity(5.20)
+        rightWheel.setVelocity(5.20)
         res = round(rightWheelSensor.getValue(),1)
         while( res != 75.5):
             robot.step(1)
