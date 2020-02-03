@@ -49,7 +49,7 @@ maxdist =0.5
 leftWheel.setVelocity(MAX_SPEED)
 rightWheel.setVelocity(MAX_SPEED)
 while robot.step(timestep) != -1:
-    if getDistance(frontSensor) < 0.5:
+    if getDistance(frontSensor) < 0.25:
         break
 
 # Rotate clockwise until the wall is to our left.
@@ -65,34 +65,34 @@ while robot.step(timestep) != -1:
 
     # Too close to the wall, we need to turn right.
    
-    if ((getDistance(sideSensor) < 0.45)or(getDistance(backsideSensor) > 0.6)):
+    if ((getDistance(sideSensor) < 0.2)or(getDistance(backsideSensor) > 0.25)):
         leftWheel.setVelocity(MAX_SPEED)
-        rightWheel.setVelocity(MAX_SPEED * 0.2)
-        if (getDistance(sideSensor) < 0.4):
+        rightWheel.setVelocity(MAX_SPEED * 0.75)
+        if (getDistance(sideSensor) < 0.05):
             leftWheel.setVelocity(MAX_SPEED)
-            rightWheel.setVelocity(-MAX_SPEED * 0.5)
+            rightWheel.setVelocity(MAX_SPEED * 0.2)
 
     # Too far from the wall, we need to turn left.
-    elif ((getDistance(sideSensor) > 0.55)or(getDistance(backsideSensor) < 0.4)):
-        leftWheel.setVelocity(MAX_SPEED * 0.2)
+    elif ((getDistance(sideSensor) > 0.25)or(getDistance(backsideSensor) < 0.2)):
+        leftWheel.setVelocity(MAX_SPEED * 0.75)
         rightWheel.setVelocity(MAX_SPEED)
-        if getDistance(sideSensor) > 0.65:
-            leftWheel.setVelocity(MAX_SPEED * 0.9)
+        if getDistance(sideSensor) > 0.35:
+            leftWheel.setVelocity(MAX_SPEED * 0.4)
             rightWheel.setVelocity(MAX_SPEED)
-        if getDistance(sideSensor) > 0.95:
-            leftWheel.setVelocity(MAX_SPEED * 0.5)
+        if getDistance(sideSensor) > 0.7:
+            leftWheel.setVelocity(MAX_SPEED * 0.2)
             rightWheel.setVelocity(MAX_SPEED)
     else:
         leftWheel.setVelocity(MAX_SPEED)
         rightWheel.setVelocity(MAX_SPEED)
     
-    if((getDistance(frontleftSensor) < 0.5)or(getDistance(frontSensor) < 0.5)):
+    if((getDistance(frontleftSensor) < 0.3)or(getDistance(frontSensor) < 0.3)):
         leftWheel.setVelocity(MAX_SPEED)
         rightWheel.setVelocity(-MAX_SPEED * 0.7)
-    if (getDistance(sideSensor) > 0.5)and(getDistance(frontleftSensor) > 0.9):
-        leftWheel.setVelocity(MAX_SPEED * 0.6)
+    if (getDistance(sideSensor) > 0.3)and(getDistance(frontleftSensor) > 0.75):#front left is diagonal so the distance from the wall is greater
+        leftWheel.setVelocity(MAX_SPEED * 0.4)
         rightWheel.setVelocity(MAX_SPEED)
-    if getDistance(frontSensor) < 0.5:
+    if getDistance(frontSensor) < 0.35:
         leftWheel.setVelocity(MAX_SPEED)
         rightWheel.setVelocity(-MAX_SPEED)
 
