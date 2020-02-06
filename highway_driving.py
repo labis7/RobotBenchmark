@@ -18,7 +18,7 @@ sensorsNames = [
     'left']
 sensors = {}
 
-maxSpeed = 82
+maxSpeed = 100
 driver = Driver()
 driver.setSteeringAngle(0.0)  # go straight
 
@@ -40,6 +40,7 @@ camera = driver.getCamera('camera')
 #camera.recognitionEnable(50)
 dest =0
 prevpos = -2
+counter=0
 while driver.step() != -1:
     # adjust the speed according to the value returned by the front distance sensor
     frontDistance = sensors['front'].getValue()
@@ -52,44 +53,49 @@ while driver.step() != -1:
     
     if(dest == 2):#1.3
         #if(x[0]<1.3): #then turn left
-        driver.setSteeringAngle(60*(x[0] - prevpos)*0.05 + (x[0]-1.3)*0.02) #TUNNING!!
+        driver.setSteeringAngle(60*(x[0] - prevpos)*0.05 + (x[0]-1.3)*0.04) #TUNNING!!
         #if(x[0]>1.3): #then turn right
         #    driver.setSteeringAngle(1*0.1)
 
         #continue
     if(dest == 1):# 5.2
        #if(x[0]<1.3): #then turn left
-       driver.setSteeringAngle(60*(x[0] - prevpos)*0.05 + (x[0]-5.2)*0.02)
+       driver.setSteeringAngle(60*(x[0] - prevpos)*0.05 + (x[0]-5.2)*0.04)
        #if(x[0]>1.3): #then turn right
        #    driver.setSteeringAngle(1*0.1)
  
        #continue   
     if(dest == 3):# -2
        #if(x[0]<1.3): #then turn left
-       driver.setSteeringAngle(60*(x[0] - prevpos)*0.05 + (x[0]+2)*0.02)
+       driver.setSteeringAngle(60*(x[0] - prevpos)*0.05 + (x[0]+2)*0.04)
        #if(x[0]>1.3): #then turn right
        #    driver.setSteeringAngle(1*0.1)
        prevpos = x[0]
        #continue    
     prevpos = x[0] 
-    if speedDiff > 0:
-        if((sensors['left'].getValue()>3)and(sensors['front left 2'].getValue()>8)): #You can steer left  
+    counter=counter +1
+    if ((speedDiff > 0)):
+        print(counter)
+        if((sensors['right'].getValue()>3)and(sensors['front right 2'].getValue()>8)and(not(sensors['right'].getValue()<7))): #you can turn right
+             print("trying right")
+             if((x[0]<5.25)and(x[0]>5.15)): #means you are left, go middle
+                 dest = 2 #middle
+             if((x[0]<1.5)and(x[0]>1)):  #1.3, you are middle,go right
+                 dest = 3 #right
+        elif((sensors['left'].getValue()>3)and(sensors['front left 2'].getValue()>8)and(sensors['front left 1'].getValue()>14)): #You can steer left  
             #driver.setSteeringAngle(-speedDiff*0.1)
+            print("trying left")
             if((x[0]<-1.5)and(x[0]>-2.5)): #-2, you are in the right row, go left
                 dest = 2 #middle
             if((x[0]<1.5)and(x[0]>1)):  #1.3, you are middle,go left
                 dest = 1 #left
-        elif((sensors['right'].getValue()>3)and(sensors['front right 2'].getValue()>8)): #you can turn right
-            if((x[0]<5.25)and(x[0]>5.15)): #means you are left, go middle
-                dest = 2 #middle
-            if((x[0]<1.5)and(x[0]>1)):  #1.3, you are middle,go right
-                dest = 3 #right
         else:    
-            driver.setBrakeIntensity(min(speedDiff / speed, 1))
+            driver.setBrakeIntensity(100)
     else:
         driver.setBrakeIntensity(0)
+        maxSpeed = 120
         
-    
+   
 
         
         
