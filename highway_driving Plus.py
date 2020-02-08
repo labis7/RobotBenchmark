@@ -50,12 +50,77 @@ minx=1000
 miny=1000
 nextcar = 0
 desty = 800
+lim = 7250
+lim2 = 7550
+lim3 = 7890
+lim4 = 7990
+lim5 = 8155
+lim6 = 8325
+lim7 = 8518
+lim8 = 8750
 while driver.step() != -1:
     # adjust the speed according to the value returned by the front distance sensor
-    
+    print(counter)
     x=gps.getValues()
     counter= counter + 1
-    if(counter<6900):
+    if((counter > 7045)):#and(counter<8200)):
+        
+        frontDistance = sensors['front'].getValue() 
+        frontRange = sensors['front'].getMaxValue()
+        speed = maxSpeed * frontDistance / frontRange
+        driver.setCruisingSpeed(speed)
+        speedDiff = driver.getCurrentSpeed() - speed
+        maxSpeed= 200
+        pos = x[0]
+        if(counter < lim):
+            driver.setSteeringAngle(  (1.2)*0.01) 
+            #maxSpeed= 100
+        if(counter >= lim):
+            
+            driver.setSteeringAngle(  (-0.9)*0.01) 
+            maxSpeed= 120
+            #maxSpeed= 50
+            #if(counter > 7990):
+            #    driver.setSteeringAngle(  (-1)*0.01)   
+            #    maxspeed = 120
+        if(counter >= lim2):          
+            driver.setSteeringAngle(  (-1.4)*0.01) 
+            maxSpeed= 100
+            #maxSpeed= 50
+            
+        if(counter >= lim3):   
+            maxSpeed= 80       
+            driver.setSteeringAngle(  (-3)*0.01) 
+        prevpos = pos
+        if(counter >= lim4):
+           driver.setSteeringAngle(  (3)*0.01) 
+        if(counter >= lim5):
+           maxSpeed= 100
+           driver.setSteeringAngle(  (-1)*0.01) 
+           if((sensors['right'].getValue()<9)and(counter == 8180)):
+               lim6 = 8181
+        if(counter >= lim6):
+           maxSpeed= 90
+           driver.setSteeringAngle(  (-0.3)*0.01)
+          
+        if(counter >= lim7):
+           maxSpeed= 90
+           driver.setSteeringAngle(  (3.35)*0.01)
+        if(counter >= lim8):
+           maxSpeed= 90
+           driver.setSteeringAngle(  (-1.5)*0.01)
+        if ((speedDiff > 0)):
+            driver.setBrakeIntensity(0.5)
+        else:
+            driver.setBrakeIntensity(0)
+        
+    elif((counter>6700)):
+        
+        if(counter > 8200):
+            maxSpeed = 50
+        
+        if(counter == 4800):
+            maxSpeed= 200
         frontDistance = min(sensors['front'].getValue() ,sensors['front left 0'].getValue() , sensors['front right 0'].getValue() )
         frontRange = sensors['front'].getMaxValue()
         speed = maxSpeed * frontDistance / frontRange
@@ -79,13 +144,13 @@ while driver.step() != -1:
         else:
             for obj in objects:
                 if(obj.get_id()==id):
-                    print(obj.get_id())
+                    #print(obj.get_id())
                     obj_pos=obj.get_position()
                     dest = obj_pos[0] 
                     desty =obj_pos[2]  
                     break
             driver.setSteeringAngle(10*(prevpos - pos)*0.04 + (dest/10)*0.04)    
-            print(dest)          
+            #print(dest)          
         if ((speedDiff > 0)):
             driver.setBrakeIntensity(1)
         if ((speedDiff > 0)and(nextcar == 0)):
@@ -104,7 +169,7 @@ while driver.step() != -1:
                                 dest = destx
                                 nextcar = -1
                                 id=obj.get_id()
-                                print("New car found:at x_axis: %f, y_axis: %f",destx,desty)
+                                #print("New car found:at x_axis: %f, y_axis: %f",destx,desty)
                 elif((sensors['right'].getValue()>3)and(sensors['front right 2'].getValue()>8)and(not(sensors['right'].getValue()<7))): #you can turn right
                     for obj in objects:
                         if(obj.get_id()>2000):
@@ -118,8 +183,8 @@ while driver.step() != -1:
                                 dest = destx 
                                 nextcar = 1 
                                 id=obj.get_id()
-                                print(id) 
-                                print("New car found:at x_axis: %f, y_axis: %f",destx,desty)     
+                                #print(id) 
+                                #print("New car found:at x_axis: %f, y_axis: %f",destx,desty)     
         else:
             driver.setBrakeIntensity(0)     
         if(abs(desty) < 13):
@@ -128,6 +193,13 @@ while driver.step() != -1:
         #prevpos = dest
         prevpos = -x[0]    
     else:
+        frontDistance = sensors['front'].getValue() 
+        frontRange = sensors['front'].getMaxValue()
+        speed = maxSpeed * frontDistance / frontRange
+        driver.setCruisingSpeed(speed)
+        speedDiff = driver.getCurrentSpeed() - speed
+        if(counter > 6040): 
+            dest = 1
         if(dest == 2):#1.3
             #if(x[0]<1.3): #then turn left
             driver.setSteeringAngle(60*(x[0] - prevpos)*0.05 + (x[0]-1.3)*0.04) #TUNNING!!
@@ -152,22 +224,22 @@ while driver.step() != -1:
         prevpos = x[0] 
         counter=counter +1
         if ((speedDiff > 0)):
-            print(counter)
+            #print(counter)
             if((sensors['right'].getValue()>3)and(sensors['front right 2'].getValue()>8)and(not(sensors['right'].getValue()<7))): #you can turn right
-                 print("trying right")
+                 #print("trying right")
                  if((x[0]<5.25)and(x[0]>5.15)): #means you are left, go middle
                      dest = 2 #middle
                  if((x[0]<1.5)and(x[0]>1)):  #1.3, you are middle,go right
                      dest = 3 #right
             elif((sensors['left'].getValue()>3)and(sensors['front left 2'].getValue()>8)and(sensors['front left 1'].getValue()>14)): #You can steer left  
                 #driver.setSteeringAngle(-speedDiff*0.1)
-                print("trying left")
+                #print("trying left")
                 if((x[0]<-1.5)and(x[0]>-2.5)): #-2, you are in the right row, go left
                     dest = 2 #middle
                 if((x[0]<1.5)and(x[0]>1)):  #1.3, you are middle,go left
                     dest = 1 #left
             else:    
-                driver.setBrakeIntensity(100)
+                driver.setBrakeIntensity(1)
         else:
             driver.setBrakeIntensity(0)
             maxSpeed = 120    
