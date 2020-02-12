@@ -4,8 +4,10 @@ from controller import Robot, Node
 import base64
 import os
 import sys
-import tempfile
-import cv2 as cv
+
+if sys.version_info.major > 2:
+    sys.exit("This controller program only works with Python 2.7.")
+
 try:
     import numpy as np
 except ImportError:
@@ -16,28 +18,17 @@ try:
 except ImportError:
     sys.exit("Warning: 'cv2' module not found. Please check the Python modules installation instructions " +
              "at 'https://www.cyberbotics.com/doc/guide/using-python'.")
-class KalmanFilter:
 
-    kf = cv.KalmanFilter(4, 2)
-    kf.measurementMatrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32)
-    kf.transitionMatrix = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32)
-
-    def Estimate(self, coordX, coordY):
-        ''' This function estimates the position of the object'''
-        measured = np.array([[np.float32(coordX)], [np.float32(coordY)]])
-        self.kf.correct(measured)
-        predicted = self.kf.predict()
-        return predicted
 
 def cleanup():
     """Remove device image files."""
     # Ignore errors if file doesn't exist.
     try:
-        os.remove(deviceImagePath + '/display.jpg')
+        os.remove('display.jpg')
     except OSError:
         pass
     try:
-        os.remove(deviceImagePath + '/camera.jpg')
+        os.remove('camera.jpg')
     except OSError:
         pass
 
@@ -47,27 +38,19 @@ def sendDeviceImage(robot, device):
     if device.getNodeType() == Node.DISPLAY:
         deviceName = 'display'
         fileName = deviceName + '.jpg'
-        device.imageSave(None, deviceImagePath + '/' + fileName)
+        device.imageSave(None, fileName)
     elif device.getNodeType() == Node.CAMERA:
         deviceName = 'camera'
         fileName = deviceName + '.jpg'
-        device.saveImage(deviceImagePath + '/' + fileName, 80)
+        device.saveImage(fileName, 80)
     else:
         return
-    with open(deviceImagePath + '/' + fileName, 'rb') as f:
+    with open(fileName, 'rb') as f:
         fileString = f.read()
-        fileString64 = base64.b64encode(fileString).decode()
-        robot.wwiSendText("image[" + deviceName + "]:data:image/jpeg;base64," + fileString64)
+        fileString64 = base64.b64encode(fileString)
+        robot.wwiSendText("image[" + deviceName + "]:data:image/jpeg;base64," + str(fileString64))
         f.close()
 
-
-# Set path to store temporary device images
-deviceImagePath = os.getcwd()
-try:
-    imageFile = open(deviceImagePath + "/image.jpg", 'w')
-    imageFile.close()
-except IOError:
-    deviceImagePath = tempfile.gettempdir()
 
 # Get pointer to the robot.
 robot = Robot()
@@ -104,7 +87,8 @@ display.setColor(0xFF0000)
 # Variables needed to draw the target on the display.
 targetPoint = []
 targetRadius = 0
-kfObj = KalmanFilter()
+oldx = 0
+oldy = 0
 # Main loop: perform a simulation step until the simulation is over.
 while robot.step(timestep) != -1:
     # Remove previously detected blob info from the display if needed.
@@ -130,29 +114,21 @@ while robot.step(timestep) != -1:
     maskRGB = np.zeros([height, width], np.uint8)
     for j in range(0, height):
         for i in range(0, width):
-            # Camera image pixel format
-            if sys.version_info.major > 2:  # Python 3 code
-                b = rawString[index]
-                g = rawString[index + 1]
-                r = rawString[index + 2]
-            else:  # Python 2.7 code
-                b = ord(rawString[index])
-                g = ord(rawString[index + 1])
-                r = ord(rawString[index + 2])
+            # Camera image pixel format: BGRA.
+            b = ord(rawString[index])
+            g = ord(rawString[index + 1])
+            r = ord(rawString[index + 2])
             index += 4
             # Yellow color threshold.
-            # r:80-99 ,g:95-108  b: 9-29 , 
-            if b < 29 and g < 255 and g > 80 and r < 255 and r > 80:
-            #if b < 29 and g < 110 and g > 80 and r < 105 and r > 80:
-            #if b < 29 and b > 0 and g < 108 and g > 95 and r < 99 and r > 80:
+            #if b < 29 and g < 105 and g > 80 and r < 120 and r > 98:
+            if b < 30 and g < 105 and g > 80 and r < 120 and r > 97:
                 maskRGB[j][i] = True
-                #print(r,g,b)
 
     # Find blobs contours in the mask.
     contours = cv2.findContours(maskRGB.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-    
+
     # Only proceed if at least one blob is found.
-    if not contours:
+    if len(contours) == 0:
         continue
 
     # Choose the largest blob.
@@ -160,46 +136,35 @@ while robot.step(timestep) != -1:
 
     # Compute the minimum enclosing circle and centroid of the blob.
     ((x, y), radius) = cv2.minEnclosingCircle(blob)
+    
     targetPoint = [int(x), int(y)]
     targetRadius = int(radius)
-    print("Real:",x,y)
-    predictedCoords = kfObj.Estimate(x, y)
-    print("Predicted:",predictedCoords[0],predictedCoords[1])
+    if(targetRadius < 3):
+        x = oldx
+        y= oldy
+        targetPoint = [int(x), int(y)]
+        targetRadius = int(radius)
+    else:
+        oldx = x
+        oldy = y
+    
+        
+    # Show detected blob in the display: draw the circle and centroid.
+    display.setAlpha(1.0)
+    display.setColor(0x00FFFF)
+    display.drawOval(targetPoint[0], targetPoint[1], targetRadius, targetRadius)
+    display.setColor(0xFF0000)
+    display.fillOval(int(targetPoint[0]), int(targetPoint[1]), 5, 5)
+    # Send the display image to the robot window.
+    sendDeviceImage(robot, display)
+
     # Move the head and camera in order to center the target object.
     # Compute distance in pixels between the target point and the center.
     dx = targetPoint[0] - width / 2
     dy = targetPoint[1] - height / 2
     # The speed factor 1.5 has been chosen empirically.
-    panHeadMotor.setVelocity(-4.5 * dx / width)
-    tiltHeadMotor.setVelocity(-2.5 * dy / height)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    # Show detected blob in the display: draw the circle and centroid.
-    display.setAlpha(1.0)
-    if targetRadius > 0:
-        display.setColor(0x00FFFF)
-        display.drawOval(targetPoint[0], targetPoint[1], targetRadius, targetRadius)
-    display.setColor(0xFF0000)
-    display.fillOval(int(targetPoint[0]), int(targetPoint[1]), 5, 5)
-    # Send the display image to the robot window.
-    sendDeviceImage(robot, display)
+    panHeadMotor.setVelocity(-6.5 * dx / width)
+    tiltHeadMotor.setVelocity(-4.5 * dy / height)
 
 # Cleanup code.
 cleanup()
