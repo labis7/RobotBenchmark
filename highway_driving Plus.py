@@ -53,11 +53,11 @@ desty = 800
 lim = 7250
 lim2 = 7550
 lim3 = 7890
-lim4 = 7990
-lim5 = 8155
-lim6 = 8325
+lim4 = 7980
+lim5 = 8161
+lim6 = 8350
 lim7 = 8518
-lim8 = 8750
+lim8 = 8800
 while driver.step() != -1:
     # adjust the speed according to the value returned by the front distance sensor
     print(counter)
@@ -93,15 +93,13 @@ while driver.step() != -1:
             driver.setSteeringAngle(  (-3)*0.01) 
         prevpos = pos
         if(counter >= lim4):
-           driver.setSteeringAngle(  (3)*0.01) 
+           driver.setSteeringAngle(  (2.6)*0.01) 
         if(counter >= lim5):
            maxSpeed= 100
-           driver.setSteeringAngle(  (-1)*0.01) 
-           if((sensors['right'].getValue()<9)and(counter == 8180)):
-               lim6 = 8181
+           driver.setSteeringAngle(  (-0.8)*0.01) 
         if(counter >= lim6):
            maxSpeed= 90
-           driver.setSteeringAngle(  (-0.3)*0.01)
+           driver.setSteeringAngle(  (-0.89)*0.01)
           
         if(counter >= lim7):
            maxSpeed= 90
