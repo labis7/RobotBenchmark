@@ -7,6 +7,7 @@ import sys
 
 if sys.version_info.major > 2:
     sys.exit("This controller program only works with Python 2.7.")
+import cv2 as cv
 
 try:
     import numpy as np
@@ -19,6 +20,18 @@ except ImportError:
     sys.exit("Warning: 'cv2' module not found. Please check the Python modules installation instructions " +
              "at 'https://www.cyberbotics.com/doc/guide/using-python'.")
 
+class KalmanFilter:
+
+    kf = cv.KalmanFilter(4, 2)
+    kf.measurementMatrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32)
+    kf.transitionMatrix = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32)
+
+    def Estimate(self, coordX, coordY):
+        ''' This function estimates the position of the object'''
+        measured = np.array([[np.float32(coordX)], [np.float32(coordY)]])
+        self.kf.correct(measured)
+        predicted = self.kf.predict()
+        return predicted
 
 def cleanup():
     """Remove device image files."""
@@ -89,6 +102,9 @@ targetPoint = []
 targetRadius = 0
 oldx = 0
 oldy = 0
+counter = 0
+
+kfObj = KalmanFilter()
 # Main loop: perform a simulation step until the simulation is over.
 while robot.step(timestep) != -1:
     # Remove previously detected blob info from the display if needed.
@@ -105,7 +121,7 @@ while robot.step(timestep) != -1:
 
     # Send the camera image to the robot window.
     # sendDeviceImage(robot, camera)
-
+    counter += 1
     # Get camera image.
     rawString = camera.getImage()
 
@@ -121,7 +137,7 @@ while robot.step(timestep) != -1:
             index += 4
             # Yellow color threshold.
             #if b < 29 and g < 105 and g > 80 and r < 120 and r > 98:
-            if b < 30 and g < 105 and g > 80 and r < 120 and r > 97:
+            if b < 30 and g < 105 and g > 80 and r < 120 and r > 99:
                 maskRGB[j][i] = True
 
     # Find blobs contours in the mask.
@@ -139,15 +155,28 @@ while robot.step(timestep) != -1:
     
     targetPoint = [int(x), int(y)]
     targetRadius = int(radius)
-    if(targetRadius < 3):
+    
+    
+    predictedCoords = kfObj.Estimate(oldx, oldy)
+    if(((targetRadius < 3) and (abs(oldx -x)>80 or abs(oldy - y)>30))and counter >15):
         x = oldx
-        y= oldy
+        y = oldy
         targetPoint = [int(x), int(y)]
         targetRadius = int(radius)
+        dx = 0
+        dy = 0
+        print("Corrected")
     else:
         oldx = x
         oldy = y
+        dx = targetPoint[0] - width / 2
+        dy = targetPoint[1] - height / 2  
     
+    print(x,y)
+    
+    #dx = targetPoint[0] - width / 2
+    #dy = targetPoint[1] - height / 2    
+        
         
     # Show detected blob in the display: draw the circle and centroid.
     display.setAlpha(1.0)
@@ -160,8 +189,7 @@ while robot.step(timestep) != -1:
 
     # Move the head and camera in order to center the target object.
     # Compute distance in pixels between the target point and the center.
-    dx = targetPoint[0] - width / 2
-    dy = targetPoint[1] - height / 2
+    
     # The speed factor 1.5 has been chosen empirically.
     panHeadMotor.setVelocity(-6.5 * dx / width)
     tiltHeadMotor.setVelocity(-4.5 * dy / height)
